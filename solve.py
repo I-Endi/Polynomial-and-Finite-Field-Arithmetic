@@ -14,6 +14,9 @@
 
 # Import built-in json library for handling input/output 
 import json
+# REMOVE
+from wolframclient.evaluation import WolframLanguageSession
+from wolframclient.language import wl, wlexpr
 from random import randint
 
 
@@ -38,57 +41,85 @@ def solve_exercise(exercise_location : str, answer_location : str):
         # Check what task within the polynomial arithmetic tasks we need to perform
         if exercise["task"] == "addition":
             # Solve polynomial arithmetic addition exercise
-            pass
+            answer = poly_addition(exercise['f'], exercise['g'], exercise['integer_modulus'])
+            answer = {"answer" : answer}
+
         elif exercise["task"] == "subtraction":
             # Solve polynomial arithmetic subtraction exercise
-            pass
+            answer = poly_subtraction(exercise['f'], exercise['g'], exercise['integer_modulus'])
+            answer = {"answer" : answer}
+
         elif exercise["task"] == "multiplication":
             # Solve polynomial arithmetic addition exercise
-            pass
+            answer = poly_multiplication(exercise['f'], exercise['g'], exercise['integer_modulus'])
+            answer = {"answer" : answer}
+
         elif exercise["task"] == "long_division":
             # Solve polynomial arithmetic subtraction exercise
-            # if poly_g == [] then ? else div
-            pass
+            answer_q, answer_r = poly_division(exercise['f'], exercise['g'], exercise['integer_modulus'])
+            answer = {"answer-q" : answer_q, "answer-r" : answer_r}
+
         elif exercise["task"] == "extended_euclidean_algorithm":
             # Solve polynomial arithmetic addition exercise
-            pass
+            answer_x, answer_y, answer_gcd = poly_EEA(exercise['f'], exercise['g'], exercise['integer_modulus'])
+            answer = {"answer-a" : answer_x, "answer-b" : answer_y, "answer-gcd" : answer_gcd}
+
         elif exercise["task"] == "irreducibility_check":
             # Solve polynomial arithmetic subtraction exercise
-            pass
-        elif exercise["task"] == "irreducibility_check":
+            answer = poly_irr_check(exercise['f'], exercise['integer_modulus'])
+            answer = {"answer" : answer}
+
+        elif exercise["task"] == "irreducible_element_generation":
             # Solve polynomial arithmetic subtraction exercise
-            pass
+            answer = poly_irr_gen(exercise['degree'], exercise['integer_modulus'])
+            answer = {"answer" : answer}
+
     else: # exercise["type"] == "finite_field_arithmetic"
         # Check what task within the finite field arithmetic tasks we need to perform
         if exercise["task"] == "addition":
             # Solve finite field arithmetic addition exercise
-            pass
+            answer = ff_addition(exercise['f'], exercise['g'], exercise['integer_modulus'], exercise['polynomial_modulus'])
+            answer = {"answer" : answer}
+
         elif exercise["task"] == "subtraction":
             # Solve finite field arithmetic addition exercise
-            pass
+            answer = ff_subtraction(exercise['f'], exercise['g'], exercise['integer_modulus'], exercise['polynomial_modulus'])
+            answer = {"answer" : answer}
+
         elif exercise["task"] == "multiplication":
             # Solve finite field arithmetic addition exercise
-            pass
+            answer = ff_multiplication(exercise['f'], exercise['g'], exercise['integer_modulus'], exercise['polynomial_modulus'])
+            answer = {"answer" : answer}
+
         elif exercise["task"] == "division":
             # Solve finite field arithmetic addition exercise
-            pass
+            if exercise['g'] == [0]:
+                answer = None
+            else:
+                answer = ff_division(exercise['f'], exercise['g'], exercise['integer_modulus'], exercise["polynomial_modulus"])
+            answer = {"answer" : answer}
+
         elif exercise["task"] == "inversion":
             # Solve finite field arithmetic addition exercise
-            pass
+            answer = ff_inverse(exercise['f'], exercise['integer_modulus'], exercise['polynomial_modulus'])
+            answer = {"answer" : answer}
+
         elif exercise["task"] == "primitivity_check":
             # Solve finite field arithmetic addition exercise
-            pass
+            answer = ff_primitivity_check(exercise['f'], exercise['integer_modulus'], exercise['polynomial_modulus'])
+            answer = {"answer" : answer}
+
         elif exercise["task"] == "primitive_element_generation":
             # Solve finite field arithmetic addition exercise
-            pass
+            answer = ff_primitivity_gen(exercise['integer_modulus'], exercise['polynomial_modulus'])
+            answer = {"answer" : answer}
 
 
     # Open file at answer_location for writing, creating the file if it does not exist yet
     # (and overwriting it if it does already exist).
     with open(answer_location, "w") as answer_file:
         # Serialize Python answer data (stored in answer) to JSON answer data and write it to answer_file
-        # json.dump(answer, answer_file, indent=4)
-        pass
+        json.dump(answer, answer_file, indent=4)
 
 ### Control Function ###
 
@@ -105,15 +136,18 @@ def poly_addition(poly_f, poly_g, mod):
     denotes the coefficient field. The polynomials are represented as a list of coefficients up to the degree of the polynomial.
     """
 
+    # Make g and f arrays of equal length and initiate the result
     poly_f, poly_g = adjust_degree(poly_f, poly_g)
     result = []
 
+    # Add the coefficients next to the same power together starting from the coefficient next to power of zero
     for i in range(len(poly_f)):
         coef = poly_f[i] + poly_g[i]
+        # Reduce the sum
         coef = coef % mod
         result.append(coef)
 
-    poly_f, poly_g = poly_clean(poly_f), poly_clean(poly_g)
+    # Remove the leading zeros and return
     return poly_clean(result)
 
 
@@ -123,15 +157,18 @@ def poly_subtraction(poly_f, poly_g, mod):
     denotes the coefficient field. The polynomials are represented as a list of coefficients up to the degree of the polynomial.
     """
 
+    # Make g and f arrays of equal length and initiate the result
     poly_f, poly_g = adjust_degree(poly_f, poly_g)
     result = []
 
+    # Subtract the coefficients next to the same power together starting from the coefficient next to power of zero
     for i in range(len(poly_f)):
         coef = poly_f[i] - poly_g[i]
+        # Reduce the result
         coef = coef % mod
         result.append(coef)
 
-    poly_f, poly_g = poly_clean(poly_f), poly_clean(poly_g)
+    # Remove the leading zeros and return
     return poly_clean(result) 
 
 
@@ -141,19 +178,25 @@ def poly_multiplication(poly_f, poly_g, mod):
     denotes the coefficient field. The polynomials are represented as a list of coefficients up to the degree of the polynomial.
     """
 
+    # Get the degrees of the polynomials
     deg_f, deg_g = poly_double_deg(poly_f, poly_g)
+    # Initiate a polynomial with all zero coefficients of the calculated degree
     result = [0] * (deg_f + deg_g + 1)
-    poly_f, poly_g = adjust_degree(poly_f, poly_g)
+    # REMOVE     # Make g and f arrays of equal length
+    # REMOVE    poly_f, poly_g = adjust_degree(poly_f, poly_g)
 
-
+    # Double for loop through the coefs of the polynomials
     for f in range(deg_f + 1):
         for g in range(deg_g + 1):
 
-            prod = poly_f[f]  * poly_g[g]
-            result[f + g] += prod
+            # Multiply coef next to power "f" in poly_f and coef next to power "g" in poly_g
+            # and add to the coef of the result next to power of "f + g"
+            prod = poly_f[f] * poly_g[g]
+            # Reduce the sum
+            result[f + g] = (result[f + g] + prod) % mod
 
-    poly_f, poly_g = poly_clean(poly_f), poly_clean(poly_g)
-    return poly_clean(poly_reduce(result, mod))
+    # Remove the leading zeros and return
+    return poly_clean(result)
 
 
 def poly_division(poly_f, poly_g, mod):
@@ -161,16 +204,29 @@ def poly_division(poly_f, poly_g, mod):
     Do a polynomial long division on 'poly_f' and 'poly_g' with the given integer modulus 'mod' which is the prime modulus that
     denotes the coefficient field. The polynomials are represented as a list of coefficients up to the degree of the polynomial.
     """
+    # If the divisor is 0 then we return undefined
+    if poly_g == [0]:
+        return None, None
+    elif poly_f == [0]:
+        return [0], [0]
+    # Find the degrees of the polynomials
     deg_f, deg_g = poly_double_deg(poly_f, poly_g)
-    q, r = [0] * (deg_f + 1), poly_f
-    deg_r = len(r) - 1
+    # Initiate quotient and reminder where quotient is initially 0
+    # and reminder is initially the dividend
+    q, r, deg_r = [0] + [0] * (deg_f - deg_g), poly_f, deg_f
 
-    while deg_r >= deg_g:
-        takeaway = (r[-1] * inverse(poly_g[-1], mod))
+    # While degree of remainder >= defree of the divisor that means that we can still divide
+    while deg_r >= deg_g and r != [0]:
+        # Multiply leading coef of remainder with the inverse of the leading coef of the divisor
+        takeaway = (r[-1] * inverse(poly_g[-1], mod)) % mod
+        # Add the product to the coef of the quotient at degree of remainder minus
+        # degree of divisor since we are calcualting the inverse of the divisor
         q[deg_r - deg_g] = (q[deg_r - deg_g] + takeaway) % mod
+        # Make the takeaway a list and multiply it with the divisor
         takeaway = ([0] * (deg_r - deg_g)) + [takeaway]
-        takeaway = poly_multiplication(takeaway, poly_g, mod)
-        r = poly_subtraction(r, takeaway, mod)
+        prod = poly_multiplication(takeaway, poly_g, mod)
+        # Subtract the takeaway from the remainder
+        r = poly_subtraction(r, prod, mod)
         r = poly_clean(r)
         deg_r = len(r) - 1
 
@@ -184,9 +240,9 @@ def poly_EEA(poly_f, poly_g, mod):
     denotes the coefficient field and return a,b,gcd such that a*poly_f + b*poly_g = gcd(poly_f, poly_g).
     The polynomials are represented as a list of coefficients up to the degree of the polynomial.
     """
-    x, v, y, u = [1], [1], [], []
+    x, v, y, u = [1], [1], [0], [0]
 
-    while poly_g != []:
+    while poly_g != [0]:
         q, r = poly_division(poly_f, poly_g, mod)
         poly_f,poly_g = poly_g, r
         x1, y1 = x, y
@@ -210,11 +266,11 @@ def poly_irr_check(poly_f, mod):
         return True
     
     t = 1
-    poly_g = [0, mod - 1] + ([0]* (pow(mod, t) - 2)) + [1]
+    poly_g = [0, - 1] + ([0]* (pow(mod, t) - 2)) + [1]
 
     while poly_gcd(poly_f, poly_g, mod) == [1]:
         t += 1
-        poly_g = [0, mod - 1] + ([0]* (pow(mod, t) - 2)) + [1]
+        poly_g = [0, - 1] + ([0]* (pow(mod, t) - 2)) + [1]
 
     if t == deg_f:
         return True
@@ -267,14 +323,6 @@ def ff_division(poly_f, poly_g, mod, poly_h):
     Do a finite field division on the irreducible polynomials 'poly_f' and 'poly_g' where 'mod' and 'poly_h' define 
     the arithmetic field. The polynomials are represented as a list of coefficients up to the degree of the polynomial.
     """
-    # poly_q, poly_r = poly_division(poly_f, poly_g, mod)
-    
-    # while poly_r != []:
-    #     print(poly_r[0])
-    #     poly_q, poly_r = poly_division(poly_addition(poly_r, poly_h, mod), poly_g, mod)
-    
-    # poly_q, poly_r = poly_division(poly_q, poly_h, mod)
-    # return poly_clean(poly_r)
     poly_inv = poly_clean(ff_inverse(poly_g, mod, poly_h))
     result = ff_multiplication(poly_f, poly_inv, mod, poly_h)
     return result
@@ -315,7 +363,7 @@ def ff_primitivity_gen(mod, poly_h):
     while not ff_primitivity_check(poly_f, mod, poly_h):
         poly_f = poly_clean(poly_random_gen(len(poly_h) - 1, mod))
 
-    print(poly_irr_check(poly_f, mod))
+    print("irr: " + poly_irr_check(poly_f, mod))
     return poly_f
 
 
@@ -339,7 +387,7 @@ def adjust_degree(poly_f, poly_g):
     
 def poly_clean(poly_f):
 
-    while len(poly_f) > 0:
+    while len(poly_f) > 1:
 
         if poly_f[-1] != 0:
             return poly_f
@@ -364,7 +412,7 @@ def inverse(x, mod):
 
 def poly_gcd(poly_f, poly_g, mod):
 
-    while poly_g != []:
+    while poly_g != [0]:
         q, r = poly_division(poly_f, poly_g, mod)
         poly_f, poly_g = poly_g, r
 
@@ -374,7 +422,7 @@ def poly_gcd(poly_f, poly_g, mod):
 def poly_random_gen(deg_f, mod):
 
     poly_f = []
-    for i in range(deg_f + 2):
+    for i in range(deg_f + 1):
         poly_f = poly_f + [randint(0, mod - 1)]
 
     return poly_f
@@ -415,18 +463,57 @@ def ff_exp(poly_f, exp, mod, poly_h):
 
 
 
-## Testing correctness and time, check special values and write comments
+## Testing correctness, check special values and write comments + (generator fix) 
 
-f = [
-        0,
-        1
-    ]
-g = []
-h = [
-        5,
-        2,
-        1
-    ]
-modulus = 7
-# print(ff_primitivity_gen(13, h))
-print(ff_primitivity_gen(13, h))
+### Correctness Checking ###
+
+def compare(comp_loc, ans_loc, exc_loc):
+    with open(comp_loc, "r") as computed_file:
+        # Deserialize JSON exercise data present in exercise_file to corresponding Python exercise data 
+        computed = json.load(computed_file)
+    with open(ans_loc, "r") as ans_file:
+        # Deserialize JSON exercise data present in exercise_file to corresponding Python exercise data 
+        ans = json.load(ans_file)
+
+    with open(exc_loc, "r") as exc_file:
+        # Deserialize JSON exercise data present in exercise_file to corresponding Python exercise data 
+        exc = json.load(exc_file)
+
+    if "gen" in exc['task']:
+        return "Generator"
+    if computed == ans:
+        return "Correct"
+    else:
+        return "Incorrect"
+
+# for i in range(18):
+#     diff = time.perf_counter()
+#     solve_exercise("Realistic/Exercises/exercise" + str(i) + ".json", "Solved/Realistic/answer" + str(i) + ".json" )
+#     diff = time.perf_counter() - diff
+#     print("Realistic " + str(i) + ": " + str(diff))
+
+# for i in range(18):
+#     diff = time.perf_counter()
+#     solve_exercise("Simple/Exercises/exercise" + str(i) + ".json", "Solved/Simple/answer" + str(i) + ".json" )
+#     diff = time.perf_counter() - diff
+#     print("Simple " + str(i) + ": " + str(diff))
+
+
+# for i in range(18):
+#     print("Realistic " + str(i) + ": " + compare("Solved/Realistic/answer" + str(i) + ".json", "Realistic/Answers/answer" + str(i) + ".json", "Realistic/Exercises/exercise" + str(i) + ".json"))
+# for i in range(18):
+#     print("Simple " + str(i) + ": " + compare("Solved/Simple/answer" + str(i) + ".json", "Simple/Answers/answer" + str(i) + ".json", "Simple/Exercises/exercise" + str(i) + ".json"))
+
+
+
+# i=9
+# diff = time.perf_counter()
+# solve_exercise("Realistic/Exercises/exercise" + str(i) + ".json", "Solved/Realistic/answer" + str(i) + ".json" )
+# diff = time.perf_counter() - diff
+# print(str(i) + ": " + str(diff))
+
+# print(str(i) + ": " + compare("Solved/Realistic/answer" + str(i) + ".json", "Realistic/Answers/answer" + str(i) + ".json", "Realistic/Exercises/exercise" + str(i) + ".json"))
+
+print(ff_primitivity_gen(13, [2, 2, 2, 2]))
+session = WolframLanguageSession()
+session.evaluate()
