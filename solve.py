@@ -14,6 +14,7 @@
 
 # Import built-in json library for handling input/output 
 import json
+from random import randint
 
 
 
@@ -201,8 +202,8 @@ def poly_EEA(poly_f, poly_g, mod):
 
 def poly_irr_check(poly_f, mod):
     """
-    Check if the given polynomial 'poly_f' is irreducable or not. The polynomial is represented 
-    as a list of coefficients up to the degree of the polynomial.
+    Check if the given polynomial 'poly_f' is irreducable or not where 'mod' is the prime modulus that
+    denotes the coefficient field. The polynomial is represented as a list of coefficients up to the degree of the polynomial.
     """
     deg_f = len(poly_f) - 1
     if deg_f < 2:
@@ -219,6 +220,103 @@ def poly_irr_check(poly_f, mod):
         return True
     else:
         return False
+
+def poly_irr_gen(deg_f, mod):
+    """
+    Generate an irreducible polynomial given it's degree as 'deg_f' and the prime modulus that denotes the coefficient 
+    field as 'mod'. The polynomial is represented as a list of coefficients up to the degree of the polynomial.
+    """    
+    poly_f = poly_clean(poly_random_gen(deg_f, mod))
+    while not poly_irr_check(poly_f, mod):
+        poly_f = poly_clean(poly_random_gen(deg_f, mod))
+
+    return poly_f
+
+
+### Finite Field Arithmetic ###
+
+def ff_addition(poly_f, poly_g, mod, poly_h):
+    """
+    Do a finite field addition on the irreducible polynomials 'poly_f' and 'poly_g' where 'mod' and 'poly_h' define 
+    the arithmetic field. The polynomials are represented as a list of coefficients up to the degree of the polynomial.
+    """
+    poly_sum = poly_addition(poly_f, poly_g, mod)
+    q, r = poly_division(poly_sum, poly_h, mod)
+    return r
+
+def ff_subtraction(poly_f, poly_g, mod, poly_h):
+    """
+    Do a finite field subtraction on the irreducible polynomials 'poly_f' and 'poly_g' where 'mod' and 'poly_h' define 
+    the arithmetic field. The polynomials are represented as a list of coefficients up to the degree of the polynomial.
+    """
+    poly_diff = poly_subtraction(poly_f, poly_g, mod)
+    q, r = poly_division(poly_diff, poly_h, mod)
+    return r
+
+def ff_multiplication(poly_f, poly_g, mod, poly_h):
+    """
+    Do a finite field multiplication on the irreducible polynomials 'poly_f' and 'poly_g' where 'mod' and 'poly_h' define 
+    the arithmetic field. The polynomials are represented as a list of coefficients up to the degree of the polynomial.
+    """
+    poly_prod = poly_multiplication(poly_f, poly_g, mod)
+    q, r = poly_division(poly_prod, poly_h, mod)
+    return r
+
+def ff_division(poly_f, poly_g, mod, poly_h):
+    """
+    Do a finite field division on the irreducible polynomials 'poly_f' and 'poly_g' where 'mod' and 'poly_h' define 
+    the arithmetic field. The polynomials are represented as a list of coefficients up to the degree of the polynomial.
+    """
+    # poly_q, poly_r = poly_division(poly_f, poly_g, mod)
+    
+    # while poly_r != []:
+    #     print(poly_r[0])
+    #     poly_q, poly_r = poly_division(poly_addition(poly_r, poly_h, mod), poly_g, mod)
+    
+    # poly_q, poly_r = poly_division(poly_q, poly_h, mod)
+    # return poly_clean(poly_r)
+    poly_inv = poly_clean(ff_inverse(poly_g, mod, poly_h))
+    result = ff_multiplication(poly_f, poly_inv, mod, poly_h)
+    return result
+
+
+def ff_inverse(poly_f, mod, poly_h):
+    """
+    Find the finite field inverse of the given polynomial, 'poly_f', on the irreducible polynomials 'poly_f' and 'poly_g' where 'mod' and 'poly_h' define 
+    the arithmetic field. The polynomials are represented as a list of coefficients up to the degree of the polynomial.
+    """
+    x, y, gcd = poly_EEA(poly_f, poly_h, mod)
+    if gcd == [1]:
+        q, r = poly_division(x, poly_h, mod)
+        return r
+    else:
+        return
+
+def ff_primitivity_check(poly_f, mod, poly_h):
+    """
+    Check whether the given polynomial, 'poly_f' is a primitive polynomial or not in the finite field defined by 'mod' and 'poly_h'.
+    The polynomials are represented as a list of coefficients up to the degree of the polynomial.
+    """
+    prime_divisors = find_prime_divisors(mod - 1)
+    order = pow(mod, len(poly_f) - 1)
+    for prime in prime_divisors:
+        if ff_exp(poly_f, (order - 1) / prime, mod, poly_h) == [1]:
+            return False
+    
+    return True
+
+
+def ff_primitivity_gen(mod, poly_h):
+    """
+    Given 'mod' and 'poly_f' which define a finite field, generate a primitive element for this field.
+    The polynomials are represented as a list of coefficients up to the degree of the polynomial.
+    """
+    poly_f = poly_clean(poly_random_gen(len(poly_h) - 1, mod))
+    while not ff_primitivity_check(poly_f, mod, poly_h):
+        poly_f = poly_clean(poly_random_gen(len(poly_h) - 1, mod))
+
+    print(poly_irr_check(poly_f, mod))
+    return poly_f
 
 
 ### Helper Functions ###
@@ -273,17 +371,62 @@ def poly_gcd(poly_f, poly_g, mod):
     gcd = poly_multiplication(poly_f, [inverse(poly_f[-1], mod)], mod)
     return gcd
 
+def poly_random_gen(deg_f, mod):
 
+    poly_f = []
+    for i in range(deg_f + 2):
+        poly_f = poly_f + [randint(0, mod - 1)]
+
+    return poly_f
+
+def find_prime_divisors(a):
+
+    prime = 2
+    result = []
+    while prime <= a:
+        if a % prime == 0:
+            result.append(prime)
+            while a % prime == 0:
+                a = a / prime
+        prime += 1
+
+    return result
+
+def ff_exp(poly_f, exp, mod, poly_h):
+    
+    if exp == 0:
+        return [1]
+
+    result = poly_f
+    while exp > 1:
+        if exp % 2 == 0:
+            result = poly_multiplication(result, result, mod)
+            exp /= 2
+        else:
+            result = poly_multiplication(result, poly_f, mod)
+            exp -= 1
+        result = poly_division(result, poly_h, mod)[1]
+
+    return result
+
+
+    
+
+
+
+
+## Testing correctness and time, check special values and write comments
 
 f = [
-        1,
         0,
-        1,
-        1,
-        1,
         1
     ]
-g = [
+g = []
+h = [
+        5,
+        2,
+        1
     ]
-modulus = 2
-print(poly_irr_check(f, modulus))
+modulus = 7
+# print(ff_primitivity_gen(13, h))
+print(ff_primitivity_gen(13, h))
